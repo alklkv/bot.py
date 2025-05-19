@@ -1,0 +1,4 @@
+pandas
+python-telegram-bot==20.3
+openpyxl
+nest_asyncio
