@@ -1,14 +1,15 @@
 import pandas as pd
 import os
+import asyncio
 from telegram import Update
-from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTypes, CommandHandler
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 
 TOKEN = os.getenv("BOT_TOKEN")
 
-# Загружаем Excel (если файл в репозитории)
+# Загружаем Excel
 data = pd.read_excel("data.xlsx")
 
-# Создаём словарь БС -> {name, lat, lon}
+# Словарь: БС -> {название, широта, долгота}
 stations = {}
 for _, row in data.iterrows():
     bs = str(row["БС"]).strip()
@@ -17,14 +18,14 @@ for _, row in data.iterrows():
         lat = float(row["Широта"])
         lon = float(row["Долгота"])
         stations[bs] = {"name": name, "lat": lat, "lon": lon}
-    except (ValueError, TypeError):
+    except Exception:
         print(f"⚠️ Пропущены некорректные координаты для БС: {bs}")
 
 # Команда /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Введите номер БС")
 
-# Ответ на обычный текст
+# Сообщения с БС
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_input = update.message.text.strip()
     if user_input in stations:
@@ -36,9 +37,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         map_url = f"https://yandex.ru/maps/?pt={lon},{lat}&z=16&l=map"
         await update.message.reply_text(f"🗺 Ссылка на карты:\n{map_url}")
     else:
-        await update.message.reply_text("❌ БС не найдена. Проверь номер и попробуй снова.")
+        await update.message.reply_text("❌ БС не найдена. Проверь номер.")
 
-# Запуск бота
+# Инициализация и запуск
 async def main():
     app = ApplicationBuilder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
@@ -46,6 +47,8 @@ async def main():
     print("✅ Бот запущен...")
     await app.run_polling()
 
+# Для совместимости с Render (и другими async-средами)
 if __name__ == "__main__":
-    import asyncio
-    asyncio.run(main())
+    loop = asyncio.get_event_loop()
+    loop.create_task(main())
+    loop.run_forever()
