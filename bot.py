@@ -4,8 +4,11 @@ import nest_asyncio
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTypes, CommandHandler
 
+import os
+TOKEN = os.getenv("BOT_TOKEN")
+
 # Загружаем Excel
-data = pd.read_excel("c:/Users/User/Downloads/bot/data.xlsx")
+data = pd.read_excel("data.xlsx")
 
 # Строим словарь: БС -> {название, широта, долгота}
 stations = {}
@@ -42,7 +45,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # Запуск бота
 async def main():
-    app = ApplicationBuilder().token("7928237258:AAGsEU2Hgwmhe_Zf5UK0lLME1sjuDB7LTGU").build()
+  app = ApplicationBuilder().token(TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
